@@ -1,9 +1,51 @@
 defmodule ReqGitHubOAuth do
   require Logger
 
-  def run(request) do
+  @moduledoc """
+  `Req` plugin for GitHub authentication.
+
+  The plugin authenticates requests to GitHub using [GitHub OAuth Device Flow](https://docs.github.com/en/developers/apps/building-oauth-apps/authorizing-oauth-apps#device-flow).
+  The GitHub OAuth it uses is: <https://github.com/apps/reqgithuboauth>.
+  """
+
+  @doc """
+  Runs the plugin.
+
+  ## Examples
+
+      req = Req.new(http_errors: :raise) |> ReqGitHubOAuth.attach()
+      Req.get!(req, url: "https://api.github.com/user").body["login"]
+      # Outputs:
+      # paste this user code:
+      #
+      #   6C44-30A8
+      #
+      # at:
+      #
+      #   https://github.com/login/device
+      #
+      # open browser window? [Yn]
+      # 15:22:28.350 [info] response: authorization_pending
+      # 15:22:33.519 [info] response: authorization_pending
+      # 15:22:38.678 [info] response: success
+      #=> "wojtekmach"
+
+      Req.get!(req, url: "https://api.github.com/user").body["login"]
+      #=> "wojtekmach"
+  """
+  def attach(request) do
+    Req.Request.append_request_steps(request,
+      req_github_oauth: &auth/1
+    )
+  end
+
+  defp auth(%{url: %URI{scheme: "https", host: "api.github.com", port: 443}} = request) do
     token = read_memory_cache() || read_fs_cache() || request_token()
     update_in(request.headers, &[{"authorization", "Bearer #{token}"} | &1])
+  end
+
+  defp auth(request) do
+    request
   end
 
   defp read_memory_cache do
@@ -37,9 +79,10 @@ defmodule ReqGitHubOAuth do
   end
 
   defp request_token do
-    client_id = "Iv1.3fc77252cc13a342"
+    # https://github.com/apps/reqgithuboauth
+    client_id = "Iv1.c8e56bdb5de5b9d7"
     url = "https://github.com/login/device/code"
-    result = Req.post!(url, {:form, client_id: client_id}).body |> URI.decode_query()
+    result = Req.post!(url, form: [client_id: client_id]).body |> URI.decode_query()
 
     IO.puts([
       "paste this user code:\n\n  ",
@@ -77,13 +120,14 @@ defmodule ReqGitHubOAuth do
       grant_type: "urn:ietf:params:oauth:grant-type:device_code"
     ]
 
-    result = Req.post!(url, {:form, params}).body |> URI.decode_query()
+    result = Req.post!(url, form: params).body |> URI.decode_query()
 
     if result["error"] do
       Logger.info(["response: ", result["error"]])
       Process.sleep(5000)
       attempt(client_id, device_code)
     else
+      Logger.info("response: success")
       result["access_token"]
     end
   end

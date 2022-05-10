@@ -2,10 +2,9 @@ defmodule ReqGitHubOAuthTest do
   use ExUnit.Case, async: true
 
   test "it works" do
-    Req.get!("https://api.github.com/user", steps: [ReqGitHubOAuth]).body["login"]
-    |> IO.inspect()
+    req = Req.new(http_errors: :raise) |> ReqGitHubOAuth.attach()
 
-    # Req.get!("https://api.github.com/user", steps: [ReqGitHubOAuth]).body["login"]
-    # |> IO.inspect()
+    Req.get!(req, url: "https://api.github.com/user").body["login"]
+    |> IO.inspect()
   end
 end
