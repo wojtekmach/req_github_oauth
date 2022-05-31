@@ -72,7 +72,7 @@ defmodule ReqGitHubOAuth do
 
   defp token_fs_path(opts) do
     Path.join(
-      opts.gh_token_cache_fs_path || :filename.basedir(:user_config, "req_github_oauth"),
+      opts[:gh_token_cache_fs_path] || :filename.basedir(:user_config, "req_github_oauth"),
       "token"
     )
   end
