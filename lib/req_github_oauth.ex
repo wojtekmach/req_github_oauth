@@ -33,14 +33,17 @@ defmodule ReqGitHubOAuth do
       Req.get!(req, url: "https://api.github.com/user").body["login"]
       #=> "wojtekmach"
   """
-  def attach(request) do
-    Req.Request.append_request_steps(request,
-      req_github_oauth: &auth/1
-    )
+  @default_opts [gh_token_cache_fs_path: false]
+  def attach(request, opts \\ []) do
+    request
+    |> Req.Request.register_options([:gh_token_cache_fs_path])
+    |> Req.Request.merge_options(Keyword.merge(@default_opts, opts))
+    |> Req.Request.append_request_steps(req_github_oauth: &auth/1)
   end
 
   defp auth(%{url: %URI{scheme: "https", host: "api.github.com", port: 443}} = request) do
-    token = read_memory_cache() || read_fs_cache() || request_token()
+    opts = request.options
+    token = read_memory_cache() || read_fs_cache(opts) || request_token(opts)
     update_in(request.headers, &[{"authorization", "Bearer #{token}"} | &1])
   end
 
@@ -56,8 +59,8 @@ defmodule ReqGitHubOAuth do
     :persistent_term.put({__MODULE__, :token}, token)
   end
 
-  defp read_fs_cache do
-    case File.read(token_fs_path()) do
+  defp read_fs_cache(opts) do
+    case File.read(token_fs_path(opts)) do
       {:ok, token} ->
         :persistent_term.put({__MODULE__, :token}, token)
         token
@@ -67,18 +70,23 @@ defmodule ReqGitHubOAuth do
     end
   end
 
-  defp token_fs_path do
-    Path.join(:filename.basedir(:user_config, "req_github_oauth"), "token")
+  defp token_fs_path(opts) do
+    Path.join(
+      opts.gh_token_cache_fs_path || :filename.basedir(:user_config, "req_github_oauth"),
+      "token"
+    )
   end
 
-  defp write_fs_cache(token) do
-    path = token_fs_path()
+  defp write_fs_cache(token, opts) do
+    path = token_fs_path(opts)
     Logger.debug(["writing ", path])
     File.mkdir_p!(Path.dirname(path))
+    File.touch!(path)
+    File.chmod!(path, 0o600)
     File.write!(path, token)
   end
 
-  defp request_token do
+  defp request_token(opts) do
     # https://github.com/apps/reqgithuboauth
     client_id = "Iv1.c8e56bdb5de5b9d7"
     url = "https://github.com/login/device/code"
@@ -98,7 +106,7 @@ defmodule ReqGitHubOAuth do
 
     token = attempt(client_id, result["device_code"])
     write_memory_cache(token)
-    write_fs_cache(token)
+    write_fs_cache(token, opts)
     token
   end
 
