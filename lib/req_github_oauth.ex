@@ -33,11 +33,10 @@ defmodule ReqGitHubOAuth do
       Req.get!(req, url: "https://api.github.com/user").body["login"]
       #=> "wojtekmach"
   """
-  @default_opts [gh_token_cache_fs_path: false]
   def attach(request, opts \\ []) do
     request
     |> Req.Request.register_options([:gh_token_cache_fs_path])
-    |> Req.Request.merge_options(Keyword.merge(@default_opts, opts))
+    |> Req.Request.merge_options(opts)
     |> Req.Request.append_request_steps(req_github_oauth: &auth/1)
   end
 
