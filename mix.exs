@@ -27,7 +27,7 @@ defmodule ReqGitHubOAuth.MixProject do
 
   defp deps do
     [
-      {:req, "~> 0.3.0-dev", github: "wojtekmach/req"},
+      {:req, "~> 0.3.0"},
       {:ex_doc, ">= 0.0.0", only: :docs}
     ]
   end
