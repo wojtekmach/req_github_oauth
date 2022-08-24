@@ -14,7 +14,14 @@ defmodule ReqGitHubOAuth.MixProject do
       ],
       docs: [
         main: "readme",
-        extras: ["README.md"]
+        extras: ["README.md", "CHANGELOG.md"]
+      ],
+      package: [
+        description: "Req plugin for GitHub authentication.",
+        licenses: ["Apache-2.0"],
+        links: %{
+          "GitHub" => "https://github.com/wojtekmach/req_github_oauth"
+        }
       ]
     ]
   end

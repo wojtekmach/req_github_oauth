@@ -1,6 +1,6 @@
 # ReqGitHubOAuth
 
-[Req](https://github.com/wojtekmach/req_s3) plugin for GitHub authentication.
+[Req](https://github.com/wojtekmach/req) plugin for GitHub authentication.
 
 The plugin authenticates requests to GitHub using [GitHub OAuth Device Flow](https://docs.github.com/en/developers/apps/building-oauth-apps/authorizing-oauth-apps#device-flow).
 The GitHub OAuth it uses is: <https://github.com/apps/reqgithuboauth>.
@@ -9,8 +9,8 @@ The GitHub OAuth it uses is: <https://github.com/apps/reqgithuboauth>.
 
 ```elixir
 Mix.install([
-  {:req, github: "wojtekmach/req"},
-  {:req_github_oauth, github: "wojtekmach/req_github_oauth"}
+  {:req, "~> 0.3.0"},
+  {:req_github_oauth, "~> 0.1.0"}
 ])
 
 req = Req.new(http_errors: :raise) |> ReqGitHubOAuth.attach()
