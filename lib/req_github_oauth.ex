@@ -43,7 +43,7 @@ defmodule ReqGitHubOAuth do
   defp auth(%{url: %URI{scheme: "https", host: "api.github.com", port: 443}} = request) do
     opts = request.options
     token = read_memory_cache() || read_fs_cache(opts) || request_token(opts)
-    update_in(request.headers, &[{"authorization", "Bearer #{token}"} | &1])
+    Req.Request.put_header(request, "authorization", "Bearer #{token}")
   end
 
   defp auth(request) do
